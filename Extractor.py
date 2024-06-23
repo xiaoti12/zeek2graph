@@ -16,14 +16,15 @@ node_info_file = path.join("raw", "node_info.json")
 
 
 class Extractor:
-    def __init__(self, log_path: str):
+    def __init__(self, log_path: str, label: int):
         self.log_path = log_path
+        self.label = label
 
         self.df: DataFrame = self.log2df()
         self.graph_id = self.get_current_graph_id()
 
-        self.node_infos: List[Dict] = []
-        self.host2node = dict()
+        self.node_infos : List[Dict] = []
+        self.host2node : Dict[str, List[int]] = dict()
         self.edges: np.ndarray = None
 
 
@@ -81,11 +82,12 @@ class Extractor:
         for node_id, row in df.iterrows():
             # 每一行为一条流，代表一个节点
             node_info = dict()
+            node_info["ts"] = row["ts"]
             node_info["graph_id"] = graph_id
             node_info["node_id"] = node_id
             node_info["flow_uid"] = row["uid"]
             node_info["attribute"] = get_node_attribute(row)
-            node_info["label"] = BLACK_LABEL
+            node_info["label"] = self.label
 
             host1 = row["id.orig_h"]
             host2 = row["id.resp_h"]
