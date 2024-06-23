@@ -1,6 +1,8 @@
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
+from Extractor import Extractor
+from typing import List
 
 host_column = "id.orig_h"
 ts_column = "ts"
@@ -27,3 +29,14 @@ def combine(malware_df: DataFrame, normal_df: DataFrame) -> DataFrame:
     df_combined.sort_values(by=ts_column, inplace=True)
     df_combined.reset_index(drop=True, inplace=True)
     return df_combined
+
+
+if __name__ == "__main__":
+    malware_df=Extractor.log2df("tls.log")
+    normal_df=Extractor.log2df("campus1.log")
+
+    replace_malware_hosts(malware_df, normal_df)
+    change_malware_ts(malware_df, normal_df)
+
+    df_combined = combine(malware_df, normal_df)
+    df_combined.to_csv("combined.csv", index=False)

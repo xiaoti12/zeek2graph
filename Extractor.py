@@ -41,7 +41,10 @@ class Extractor:
         data = self.load_node_infos()
         return data[-1]["graph_id"] + 1
 
-    def log2df(self) -> DataFrame:
+    @classmethod
+    def log2df(self, log_path: str) -> DataFrame:
+        if log_path is not None:
+            self.log_path = log_path
         if not os.path.exists(self.log_path):
             print("File not found")
             return None
