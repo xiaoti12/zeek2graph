@@ -1,0 +1,12 @@
+# project file
+.idea
+__pycache__
+.vscode
+
+# data file
+*.csv
+*.json
+*.project
+*.log
+
+test.py
