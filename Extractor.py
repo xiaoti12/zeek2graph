@@ -18,14 +18,14 @@ node_info_file = path.join("raw", "node_info.json")
 class Extractor:
     def __init__(self, log_path: str):
         self.log_path = log_path
-        self.log_reader = LogToDataFrame()
 
-        self.df : DataFrame = None
-        self.node_infos : List[Dict] = []
-        self.host2node = dict()
-        self.edges : np.ndarray = None
-
+        self.df: DataFrame = self.log2df()
         self.graph_id = self.get_current_graph_id()
+
+        self.node_infos: List[Dict] = []
+        self.host2node = dict()
+        self.edges: np.ndarray = None
+
 
     def get_current_graph_id(self) -> int:
         # create file if not exist
@@ -34,6 +34,7 @@ class Extractor:
                 pass
             return 0
         with open(node_info_file, "r") as f:
+            f.seek(0, os.SEEK_END)
             if f.tell() == 0:
                 return 0
         data = self.load_node_infos()
@@ -44,7 +45,7 @@ class Extractor:
             print("File not found")
             return None
         log_reader = LogToDataFrame()
-        df = log_reader.create_dataframe(path, ts_index=False, aggressive_category=False)
+        df = log_reader.create_dataframe(self.log_path, ts_index=False, aggressive_category=False)
         # delete ts and duration column
         df.replace([pd.NA, pd.NaT, np.nan], 0, inplace=True)
         df.infer_objects(copy=False)
@@ -69,8 +70,12 @@ class Extractor:
             self.edges[node_id][node] = 1
 
     # 更新node_infos和edges邻接矩阵
-    def extract(self, df: DataFrame):
-        graph_id = self.get_current_graph_id()
+    def extract(self):
+        if self.df is None:
+            print("data not found")
+            return
+        df = self.df
+        graph_id = self.graph_id
         node_total = df.shape[0]
         self.edges = np.zeros((node_total, node_total), dtype=int)
         for node_id, row in df.iterrows():
@@ -87,18 +92,19 @@ class Extractor:
             self.add_edge(host1, host2, node_id)
 
             self.node_infos.append(node_info)
-        
+
         self.save()
     
     def save_node_infos(self):
+        pre_data = self.load_node_infos()
         with open(node_info_file, "w") as f:
-            json.dump(self.node_infos, f)
+            json.dump(pre_data + self.node_infos, f)
 
-    def load_node_infos(self) -> pd.DataFrame:
+    def load_node_infos(self) -> List[Dict]:
         with open(node_info_file, "r") as f:
             data = json.load(f)
-        return pd.DataFrame(data)
-    
+        return data
+
     def save_edges(self):
         edges_file = path.join("raw", f"edges_{self.graph_id}.npy")
         np.save(edges_file, self.edges)
