@@ -31,6 +31,11 @@ def combine(malware_df: DataFrame, normal_df: DataFrame) -> DataFrame:
     return df_combined
 
 
+def split_df_by_hosts(df: DataFrame) -> List[DataFrame]:
+    grouped = df.groupby(["id.orig_h", "id.resp_h"])
+    return [group for _, group in grouped]
+
+
 if __name__ == "__main__":
     malware_df=Extractor.log2df("tls.log")
     normal_df=Extractor.log2df("campus1.log")
@@ -40,3 +45,7 @@ if __name__ == "__main__":
 
     df_combined = combine(malware_df, normal_df)
     df_combined.to_csv("combined.csv", index=False)
+
+    malware_df = Extractor.log2df("mta-2023.log")
+    dfs = split_df_by_hosts(malware_df)
+    print(len(dfs))
