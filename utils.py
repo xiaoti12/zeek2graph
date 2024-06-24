@@ -37,7 +37,7 @@ def visualize_graph(data):
 
 
 def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]:
-    if not time_interval.endswith(["s", "min", "H"]):
+    if not time_interval.endswith(("s", "min", "H")):
         print("Invalid time interval")
         return [df]
     

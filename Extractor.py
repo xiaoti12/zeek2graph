@@ -17,6 +17,7 @@ class Extractor:
             self.log_path = log_path
             self.df: DataFrame = self.log2df()
         elif df is not None:
+            df.reset_index(inplace=True)
             self.df = df
         
         self.label = label
@@ -86,7 +87,6 @@ class Extractor:
         for node_id, row in df.iterrows():
             # 每一行为一条流，代表一个节点
             node_info = dict()
-            node_info["ts"] = row[COLUMN.TIMESTAMP]
             node_info["graph_id"] = graph_id
             node_info["node_id"] = node_id
             node_info["flow_uid"] = row["uid"]
@@ -112,7 +112,12 @@ class Extractor:
     @classmethod
     def load_node_infos(self) -> List[Dict]:
         with open(NODE_INFO_FILE, "r") as f:
-            data = json.load(f)
+           content = f.read().strip()
+
+        if len(content) == 0:
+            data = []
+        else:
+            data = json.loads(content)
         return data
 
     def save_edges(self):
