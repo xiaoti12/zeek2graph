@@ -16,17 +16,21 @@ node_info_file = path.join("raw", "node_info.json")
 
 
 class Extractor:
-    def __init__(self, log_path: str, label: int):
-        self.log_path = log_path
-        self.label = label
+    def __init__(self, log_path: str = "", df: DataFrame = None, label: int = None):
+        if log_path != "":
+            self.log_path = log_path
+            self.df: DataFrame = df
+        elif df is not None:
+            self.df = df
+        if label is not None:
+            self.label = label
 
         self.df: DataFrame = self.log2df()
         self.graph_id = self.get_current_graph_id()
 
-        self.node_infos : List[Dict] = []
-        self.host2node : Dict[str, List[int]] = dict()
+        self.node_infos: List[Dict] = []
+        self.host2node: Dict[str, List[int]] = dict()
         self.edges: np.ndarray = None
-
 
     def get_current_graph_id(self) -> int:
         # create file if not exist
@@ -42,7 +46,7 @@ class Extractor:
         return data[-1]["graph_id"] + 1
 
     @classmethod
-    def log2df(self, log_path: str) -> DataFrame:
+    def log2df(self, log_path: str, label: int = None) -> DataFrame:
         if log_path is not None:
             self.log_path = log_path
         if not os.path.exists(self.log_path):
@@ -50,6 +54,8 @@ class Extractor:
             return None
         log_reader = LogToDataFrame()
         df = log_reader.create_dataframe(self.log_path, ts_index=False, aggressive_category=False)
+        if label is not None:
+            df["label"] = label
         # delete ts and duration column
         df.replace([pd.NA, pd.NaT, np.nan], 0, inplace=True)
         df.infer_objects(copy=False)
@@ -90,7 +96,10 @@ class Extractor:
             node_info["node_id"] = node_id
             node_info["flow_uid"] = row["uid"]
             node_info["attribute"] = get_node_attribute(row)
-            node_info["label"] = self.label
+            if self.label is None:
+                node_info["label"] = row["label"]
+            else:
+                node_info["label"] = self.label
 
             host1 = row["id.orig_h"]
             host2 = row["id.resp_h"]
@@ -99,7 +108,7 @@ class Extractor:
             self.node_infos.append(node_info)
 
         self.save()
-    
+
     def save_node_infos(self):
         pre_data = self.load_node_infos()
         with open(node_info_file, "w") as f:
@@ -117,5 +126,3 @@ class Extractor:
     def save(self):
         self.save_node_infos()
         self.save_edges()
-
-    
