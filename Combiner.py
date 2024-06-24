@@ -2,9 +2,8 @@ import pandas as pd
 from pandas import DataFrame
 import numpy as np
 from typing import List
+from Constants import *
 
-host_column = "id.orig_h"
-ts_column = "ts"
 
 
 class Combiner:
@@ -14,28 +13,28 @@ class Combiner:
         self.malware_list = self.split_df_by_hosts(malware_df)
 
     def replace_malware_hosts(self) -> None:
-        normal_hosts = self.normal[host_column].unique()
+        normal_hosts = self.normal[COLUMN.HOST].unique()
 
         for malware_df in self.malware_list:
             replacement = {}
 
-            for host in malware_df[host_column].unique():
+            for host in malware_df[COLUMN.HOST].unique():
                 replacement[host] = np.random.choice(normal_hosts)
-            malware_df[host_column] = malware_df[host_column].map(replacement)
+            malware_df[COLUMN.HOST] = malware_df[COLUMN.HOST].map(replacement)
 
     def change_malware_ts(self) -> None:
-        base_timestamp = np.random.choice(self.normal[ts_column])
+        base_timestamp = np.random.choice(self.normal[COLUMN.TIMESTAMP])
         for malware_df in self.malware_list:
-            time_diffs = malware_df[ts_column] - malware_df[ts_column].iloc[0]
+            time_diffs = malware_df[COLUMN.TIMESTAMP] - malware_df[COLUMN.TIMESTAMP].iloc[0]
 
-            malware_df[ts_column] = base_timestamp + time_diffs
+            malware_df[COLUMN.TIMESTAMP] = base_timestamp + time_diffs
 
     def get_combined(self) -> DataFrame:
         self.replace_malware_hosts()
         self.change_malware_ts()
 
         df_combined = pd.concat(self.malware_list + [self.normal])
-        df_combined.sort_values(by=ts_column, inplace=True)
+        df_combined.sort_values(by=COLUMN.TIMESTAMP, inplace=True)
         df_combined.reset_index(drop=True, inplace=True)
         return df_combined
 

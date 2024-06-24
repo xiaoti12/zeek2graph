@@ -7,12 +7,8 @@ from typing import List, Dict
 import numpy as np
 from utils import get_node_attribute
 import json
+from Constants import *
 
-
-BLACK_LABEL = 1
-WHITE_LABEL = 0
-
-node_info_file = path.join("raw", "node_info.json")
 
 
 class Extractor:
@@ -33,11 +29,11 @@ class Extractor:
 
     def get_current_graph_id(self) -> int:
         # create file if not exist
-        if not os.path.exists(node_info_file):
-            with open(node_info_file, "w") as f:
+        if not os.path.exists(NODE_INFO_FILE):
+            with open(NODE_INFO_FILE, "w") as f:
                 pass
             return 0
-        with open(node_info_file, "r") as f:
+        with open(NODE_INFO_FILE, "r") as f:
             f.seek(0, os.SEEK_END)
             if f.tell() == 0:
                 return 0
@@ -54,7 +50,7 @@ class Extractor:
         log_reader = LogToDataFrame()
         df = log_reader.create_dataframe(self.log_path, ts_index=False, aggressive_category=False)
         if label is not None:
-            df["label"] = label
+            df[COLUMN.LABEL] = label
         # delete ts and duration column
         df.replace([pd.NA, pd.NaT, np.nan], 0, inplace=True)
         df.infer_objects(copy=False)
@@ -90,13 +86,13 @@ class Extractor:
         for node_id, row in df.iterrows():
             # 每一行为一条流，代表一个节点
             node_info = dict()
-            node_info["ts"] = row["ts"]
+            node_info["ts"] = row[COLUMN.TIMESTAMP]
             node_info["graph_id"] = graph_id
             node_info["node_id"] = node_id
             node_info["flow_uid"] = row["uid"]
             node_info["attribute"] = get_node_attribute(row)
             if self.label is None:
-                node_info["label"] = row["label"]
+                node_info["label"] = row[COLUMN.LABEL]
             else:
                 node_info["label"] = self.label
 
@@ -110,11 +106,11 @@ class Extractor:
 
     def save_node_infos(self):
         pre_data = self.load_node_infos()
-        with open(node_info_file, "w") as f:
+        with open(NODE_INFO_FILE, "w") as f:
             json.dump(pre_data + self.node_infos, f)
 
     def load_node_infos(self) -> List[Dict]:
-        with open(node_info_file, "r") as f:
+        with open(NODE_INFO_FILE, "r") as f:
             data = json.load(f)
         return data
 
