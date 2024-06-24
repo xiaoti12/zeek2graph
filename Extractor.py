@@ -109,6 +109,7 @@ class Extractor:
         with open(NODE_INFO_FILE, "w") as f:
             json.dump(pre_data + self.node_infos, f)
 
+    @classmethod
     def load_node_infos(self) -> List[Dict]:
         with open(NODE_INFO_FILE, "r") as f:
             data = json.load(f)
@@ -117,6 +118,11 @@ class Extractor:
     def save_edges(self):
         edges_file = path.join("raw", f"edges_{self.graph_id}.npy")
         np.save(edges_file, self.edges)
+    
+    @classmethod
+    def load_edges(self, graph_id: int) -> np.ndarray:
+        edges_file = path.join("raw", f"edges_{graph_id}.npy")
+        return np.load(edges_file)
 
     def save(self):
         self.save_node_infos()
