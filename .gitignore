@@ -8,5 +8,7 @@ __pycache__
 *.json
 *.project
 *.log
+*.pt
+*.npy
 
 test.py
