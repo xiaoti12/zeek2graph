@@ -36,5 +36,18 @@ def visualize_graph(data):
     visualize_graph(G, color=data.y)
 
 
+def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]:
+    if not time_interval.endswith(["s", "min", "H"]):
+        print("Invalid time interval")
+        return [df]
+    
+    df.set_index(COLUMN.TIMESTAMP, inplace=True)
+
+    resampled_groups = df.resample(time_interval)
+    dfs = [group for _, group in resampled_groups if group.shape[0] > 0]
+
+    return dfs
+
+
 if __name__ == "__main__":
     pass
