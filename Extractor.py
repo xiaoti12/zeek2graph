@@ -16,16 +16,15 @@ node_info_file = path.join("raw", "node_info.json")
 
 
 class Extractor:
-    def __init__(self, log_path: str = "", df: DataFrame = None, label: int = None):
-        if log_path != "":
+    def __init__(self, log_path: str = None, df: DataFrame = None, label: int = None):
+        if log_path is not None:
             self.log_path = log_path
-            self.df: DataFrame = df
+            self.df: DataFrame = self.log2df()
         elif df is not None:
             self.df = df
-        if label is not None:
-            self.label = label
+        
+        self.label = label
 
-        self.df: DataFrame = self.log2df()
         self.graph_id = self.get_current_graph_id()
 
         self.node_infos: List[Dict] = []
@@ -46,7 +45,7 @@ class Extractor:
         return data[-1]["graph_id"] + 1
 
     @classmethod
-    def log2df(self, log_path: str, label: int = None) -> DataFrame:
+    def log2df(self, log_path: str = None, label: int = None) -> DataFrame:
         if log_path is not None:
             self.log_path = log_path
         if not os.path.exists(self.log_path):

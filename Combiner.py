@@ -30,7 +30,10 @@ class Combiner:
 
             malware_df[ts_column] = base_timestamp + time_diffs
 
-    def combine(self) -> DataFrame:
+    def get_combined(self) -> DataFrame:
+        self.replace_malware_hosts()
+        self.change_malware_ts()
+
         df_combined = pd.concat(self.malware_list + [self.normal])
         df_combined.sort_values(by=ts_column, inplace=True)
         df_combined.reset_index(drop=True, inplace=True)
