@@ -2,6 +2,7 @@ import torch
 from torch_geometric.data import InMemoryDataset, Data
 import os
 from utils import *
+from Extractor import Extractor
 
 
 class MyDataset(InMemoryDataset):
@@ -34,10 +35,10 @@ class MyDataset(InMemoryDataset):
             return
 
         data_list = []
-        node_info_df = load_node_infos()
+        node_info_df = Extractor.load_node_infos()
 
-        for graph_id in range(node_info_df.iloc[-1]["graph_id"] + 1):
-            edges = load_edges(graph_id)
+        for graph_id in node_info_df["graph_id"].unique():
+            edges = Extractor.load_edges(graph_id)
             current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
 
             attrs = np.array(current_data["attribute"].to_list(), dtype=np.float32)

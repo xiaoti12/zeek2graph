@@ -1,5 +1,5 @@
 from zat.log_to_dataframe import LogToDataFrame
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import pandas as pd
 import os
 from os import path
@@ -128,6 +128,10 @@ class Extractor:
     def load_edges(self, graph_id: int) -> np.ndarray:
         edges_file = path.join("raw", f"edges_{graph_id}.npy")
         return np.load(edges_file)
+
+    def get_edge_attr(self,node1: Series, node2: Series) -> float:
+        time_diff = node2[COLUMN.TIMESTAMP] - node1[COLUMN.TIMESTAMP]
+        return abs(1/time_diff)
 
     def save(self):
         self.save_node_infos()
