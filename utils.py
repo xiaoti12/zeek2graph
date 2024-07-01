@@ -30,6 +30,22 @@ def dense_matrix_to_coo(adj_matrix: np.ndarray) -> torch.Tensor:
 
     return coo_tensor
 
+def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
+    edge_attr_file = path.join("raw", f"edge_attr_{graph_id}.npy")
+    edge_attr_matrix: np.ndarray = np.load(edge_attr_file)
+
+    edge_attr = torch.empty(0,1)
+
+    for index in range(edge_attr_matrix.shape[0]):
+        start = coo_tensor[0, index].item()
+        end = coo_tensor[1, index].item()
+        cur_attr = edge_attr_matrix[start][end]
+
+        value = torch.tensor([[cur_attr]])
+        edge_attr = torch.cat((edge_attr, value), dim=0)
+
+    return edge_attr
+
 
 def visualize_graph(data):
     G = to_networkx(data, to_undirected=True)

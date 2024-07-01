@@ -27,6 +27,7 @@ class Extractor:
         self.node_infos: List[Dict] = []
         self.host2node: Dict[str, List[int]] = dict()
         self.edges: np.ndarray = None
+        self.edge_attr: np.ndarray = None
 
     def get_current_graph_id(self) -> int:
         # create file if not exist
@@ -71,9 +72,17 @@ class Extractor:
         for node in self.host2node[host1]:
             self.edges[node][node_id] = 1
             self.edges[node_id][node] = 1
+
+            attr = self.get_edge_attr(node, node_id)
+            self.edge_attr[node][node_id] = attr
+            self.edge_attr[node_id][node] = attr
         for node in self.host2node[host2]:
             self.edges[node][node_id] = 1
             self.edges[node_id][node] = 1
+
+            attr = self.get_edge_attr(node, node_id)
+            self.edge_attr[node][node_id] = attr
+            self.edge_attr[node_id][node] = attr
 
     # 更新node_infos和edges邻接矩阵
     def extract(self):
@@ -84,6 +93,7 @@ class Extractor:
         graph_id = self.graph_id
         node_total = df.shape[0]
         self.edges = np.zeros((node_total, node_total), dtype=int)
+        self.edge_attr = np.zeros((node_total, node_total), dtype=float)
         for node_id, row in df.iterrows():
             # 每一行为一条流，代表一个节点
             node_info = dict()
@@ -123,14 +133,19 @@ class Extractor:
     def save_edges(self):
         edges_file = path.join("raw", f"edges_{self.graph_id}.npy")
         np.save(edges_file, self.edges)
+
+        edge_attr_file = path.join("raw", f"edge_attr_{self.graph_id}.npy")
+        np.save(edge_attr_file, self.edge_attr)
     
     @classmethod
     def load_edges(self, graph_id: int) -> np.ndarray:
         edges_file = path.join("raw", f"edges_{graph_id}.npy")
         return np.load(edges_file)
 
-    def get_edge_attr(self,node1: Series, node2: Series) -> float:
-        time_diff = node2[COLUMN.TIMESTAMP] - node1[COLUMN.TIMESTAMP]
+    def get_edge_attr(self,node1: int, node2: int) -> float:
+        node1_col = self.df.iloc[node1]
+        node2_col = self.df.iloc[node2]
+        time_diff = node2_col[COLUMN.TIMESTAMP] - node1_col[COLUMN.TIMESTAMP]
         return abs(1/time_diff)
 
     def save(self):

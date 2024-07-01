@@ -48,8 +48,9 @@ class MyDataset(InMemoryDataset):
             y = torch.from_numpy(labels)
 
             edges_index = dense_matrix_to_coo(edges)
+            edge_attr = get_edge_attr(edges_index, graph_id)
 
-            data = Data(x=attrs, y=y, edge_index=edges_index)
+            data = Data(x=attrs, y=y, edge_index=edges_index, edge_attr=edge_attr)
             data_list.append(data)
 
         self.save(data_list, self.processed_paths[0])
