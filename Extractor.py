@@ -73,6 +73,8 @@ class Extractor:
             self.host2node[host2].append(node_id)
 
         for node in self.host2node[host1]:
+            if node == node_id:
+                continue
             self.edges[node][node_id] = 1
             self.edges[node_id][node] = 1
 
@@ -80,6 +82,8 @@ class Extractor:
             self.edge_attr[node][node_id] = attr
             self.edge_attr[node_id][node] = attr
         for node in self.host2node[host2]:
+            if node == node_id:
+                continue
             self.edges[node][node_id] = 1
             self.edges[node_id][node] = 1
 
@@ -123,7 +127,7 @@ class Extractor:
             json.dump(pre_data + self.node_infos, f)
 
     @classmethod
-    def load_node_infos(self) -> List[Dict]:
+    def load_node_infos(self) -> pd.DataFrame:
         with open(NODE_INFO_FILE, "r") as f:
             content = f.read().strip()
 
@@ -131,7 +135,7 @@ class Extractor:
             data = []
         else:
             data = json.loads(content)
-        return data
+        return pd.DataFrame.from_dict(data)
 
     def save_edges(self):
         edges_file = path.join("raw", f"edges_{self.graph_id}.npy")
@@ -149,7 +153,10 @@ class Extractor:
         # 边权重为时间差的倒数
         node1_col = self.df.iloc[node1]
         node2_col = self.df.iloc[node2]
-        time_diff = node2_col[COLUMN.TIMESTAMP] - node1_col[COLUMN.TIMESTAMP]
+        time_diff: pd.Timedelta = node2_col[COLUMN.TIMESTAMP] - node1_col[COLUMN.TIMESTAMP]
+        time_diff = time_diff.seconds
+        if time_diff == 0:
+            return float(1e8)
         return abs(1 / time_diff)
 
     def save(self):

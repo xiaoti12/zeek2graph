@@ -24,11 +24,11 @@ class Combiner:
 
     def change_malware_ts(self) -> None:
         # 将恶意流量中的timestamp适配到正常流量一致
-        base_timestamp = np.random.choice(self.normal[COLUMN.TIMESTAMP])
         for malware_df in self.malware_list:
+            base_timestamp = np.random.choice(self.normal[COLUMN.TIMESTAMP])
             time_diffs = malware_df[COLUMN.TIMESTAMP] - malware_df[COLUMN.TIMESTAMP].iloc[0]
 
-            malware_df[COLUMN.TIMESTAMP] = base_timestamp + time_diffs
+            malware_df[COLUMN.TIMESTAMP] = base_timestamp + time_diffs + pd.Timedelta(seconds=np.random.randint(1, 5))
 
     def get_combined(self) -> DataFrame:
         self.replace_malware_hosts()

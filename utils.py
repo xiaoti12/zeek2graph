@@ -38,7 +38,9 @@ def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
 
     edge_attr = torch.empty(0, 1)
 
-    for index in range(edge_attr_matrix.shape[0]):
+    coo_tensor = coo_tensor._indices()
+
+    for index in range(coo_tensor.shape[1]):
         start = coo_tensor[0, index].item()
         end = coo_tensor[1, index].item()
         cur_attr = edge_attr_matrix[start][end]
