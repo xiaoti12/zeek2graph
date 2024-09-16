@@ -30,11 +30,13 @@ def dense_matrix_to_coo(adj_matrix: np.ndarray) -> torch.Tensor:
 
     return coo_tensor
 
+
 def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
+    # 从COO向量读取边的起终节点，读取权重，返回[n, 1]的向量
     edge_attr_file = path.join("raw", f"edge_attr_{graph_id}.npy")
     edge_attr_matrix: np.ndarray = np.load(edge_attr_file)
 
-    edge_attr = torch.empty(0,1)
+    edge_attr = torch.empty(0, 1)
 
     for index in range(edge_attr_matrix.shape[0]):
         start = coo_tensor[0, index].item()
@@ -53,10 +55,11 @@ def visualize_graph(data):
 
 
 def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]:
+    # 按时间拆分为dataframe的列表
     if not time_interval.endswith(("s", "min", "H")):
         print("Invalid time interval")
         return [df]
-    
+
     df.set_index(COLUMN.TIMESTAMP, inplace=True)
 
     resampled_groups = df.resample(time_interval)

@@ -10,7 +10,6 @@ import json
 from Constants import *
 
 
-
 class Extractor:
     def __init__(self, log_path: str = None, df: DataFrame = None, label: int = None):
         if log_path is not None:
@@ -19,17 +18,20 @@ class Extractor:
         elif df is not None:
             df.reset_index(inplace=True)
             self.df = df
-        
+
         self.label = label
 
         self.graph_id = self.get_current_graph_id()
 
         self.node_infos: List[Dict] = []
+        # 记录每个主机对应的节点，即在哪些流中
         self.host2node: Dict[str, List[int]] = dict()
         self.edges: np.ndarray = None
         self.edge_attr: np.ndarray = None
 
     def get_current_graph_id(self) -> int:
+        # 找出node_info_file中，最后一行数据的graph_id，做递增
+        # 每次提取，会将df中所有数据标为同一个graph
         # create file if not exist
         if not os.path.exists(NODE_INFO_FILE):
             with open(NODE_INFO_FILE, "w") as f:
@@ -59,6 +61,7 @@ class Extractor:
         return df
 
     def add_edge(self, host1: str, host2: str, node_id: int):
+        # 更新主机对应节点、邻接矩阵
         if host1 not in self.host2node:
             self.host2node[host1] = [node_id]
         else:
@@ -122,7 +125,7 @@ class Extractor:
     @classmethod
     def load_node_infos(self) -> List[Dict]:
         with open(NODE_INFO_FILE, "r") as f:
-           content = f.read().strip()
+            content = f.read().strip()
 
         if len(content) == 0:
             data = []
@@ -136,17 +139,18 @@ class Extractor:
 
         edge_attr_file = path.join("raw", f"edge_attr_{self.graph_id}.npy")
         np.save(edge_attr_file, self.edge_attr)
-    
+
     @classmethod
     def load_edges(self, graph_id: int) -> np.ndarray:
         edges_file = path.join("raw", f"edges_{graph_id}.npy")
         return np.load(edges_file)
 
-    def get_edge_attr(self,node1: int, node2: int) -> float:
+    def get_edge_attr(self, node1: int, node2: int) -> float:
+        # 边权重为时间差的倒数
         node1_col = self.df.iloc[node1]
         node2_col = self.df.iloc[node2]
         time_diff = node2_col[COLUMN.TIMESTAMP] - node1_col[COLUMN.TIMESTAMP]
-        return abs(1/time_diff)
+        return abs(1 / time_diff)
 
     def save(self):
         self.save_node_infos()

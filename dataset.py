@@ -62,17 +62,7 @@ if __name__ == "__main__":
     z = dataset[0]
     print(f'Dataset: {dataset}:')
     print('==============================')
-    # Total num of graphs?
     print(f'Number of graphs: {len(dataset)}')
-    # Num of features?
     print(f'Number of features: {dataset.num_features}')
-    # Num of edges for graph 1?
     print(f'Number of edges: {z.num_edges}')
-    # Number of labels?
     print(f'Number of classes: {dataset.num_classes}')
-    # Average node degree?
-    print(f'Average node degree: {z.num_edges / z.num_nodes:.2f}')
-    # # Do we have isolated nodes?
-    # print(f'Contains isolated nodes: {z.has_isolated_nodes()}')
-    # # Do we contain self-loops?
-    # print(f'Contains self-loops: {z.has_self_loops()}')
