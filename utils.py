@@ -10,9 +10,39 @@ import matplotlib.pyplot as plt
 
 def get_node_attribute(row: pd.Series) -> List:
     attr = []
-    attr.append(row["san_num"])
-    attr.append(row["ext_num"])
+    attr.append(row["up_bytes"])
+    attr.append(row["down_bytes"])
+    attr.append(row["up_bytes"] / (row["down_bytes"] + 0.1))
+    attr.append(row["up_pkts"] + row["down_pkts"])
+    attr = attr + get_packet_len_bin(row["or_spl"])
+    attr.append(get_tls_version(row))
+
     return attr
+
+
+def get_packet_len_bin(packet_len: str) -> List:
+    packet_len = packet_len.split(",")
+    bins = [0 for i in range(10)]
+    for l in packet_len:
+        index = int(abs(int(l)) / 150)
+        bins[min(index, 9)] += 1
+    return bins
+
+
+def get_tls_version(series):
+    version_map = {
+        (771, 772): 7,
+        766: 1,
+        767: 2,
+        768: 3,
+        769: 4,
+        770: 5,
+        771: 6,
+    }
+    version = version_map.get((series['server_version'], series['server_supported_version']))
+    if version is None:
+        version = version_map.get(series['server_version'])
+    return version if version is not None else 0
 
 
 def dense_matrix_to_coo(adj_matrix: np.ndarray) -> torch.Tensor:

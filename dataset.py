@@ -35,7 +35,7 @@ class MyDataset(InMemoryDataset):
             return
 
         data_list = []
-        node_info_df = Extractor.load_node_infos()
+        node_info_df = pd.DataFrame.from_dict(Extractor.load_node_infos())
 
         for graph_id in node_info_df["graph_id"].unique():
             edges = Extractor.load_edges(graph_id)

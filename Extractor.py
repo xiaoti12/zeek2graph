@@ -106,7 +106,6 @@ class Extractor:
             node_info = dict()
             node_info["graph_id"] = graph_id
             node_info["node_id"] = node_id
-            node_info["flow_uid"] = row["uid"]
             node_info["attribute"] = get_node_attribute(row)
             if self.label is None:
                 node_info["label"] = row[COLUMN.LABEL]
@@ -127,7 +126,7 @@ class Extractor:
             json.dump(pre_data + self.node_infos, f)
 
     @classmethod
-    def load_node_infos(self) -> pd.DataFrame:
+    def load_node_infos(self) -> List[Dict]:
         with open(NODE_INFO_FILE, "r") as f:
             content = f.read().strip()
 
@@ -135,7 +134,7 @@ class Extractor:
             data = []
         else:
             data = json.loads(content)
-        return pd.DataFrame.from_dict(data)
+        return data
 
     def save_edges(self):
         edges_file = path.join("raw", f"edges_{self.graph_id}.npy")
