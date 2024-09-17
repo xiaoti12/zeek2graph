@@ -66,3 +66,10 @@ if __name__ == "__main__":
     print(f'Number of features: {dataset.num_features}')
     print(f'Number of edges: {z.num_edges}')
     print(f'Number of classes: {dataset.num_classes}')
+
+    if z.x.is_sparse:
+        z.x = z.x.to_dense()  # 将特征转为密集张量
+    if z.edge_index.is_sparse:
+        z.edge_index = z.edge_index._indices()
+
+    visualize_graph(z)

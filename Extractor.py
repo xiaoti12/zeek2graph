@@ -155,9 +155,7 @@ class Extractor:
         node2_col = self.df.iloc[node2]
         time_diff: pd.Timedelta = node2_col[COLUMN.TIMESTAMP] - node1_col[COLUMN.TIMESTAMP]
         time_diff = time_diff.seconds
-        if time_diff == 0:
-            return float(1e8)
-        return abs(1 / time_diff)
+        return abs(1 / (time_diff + 0.01))
 
     def save(self):
         self.save_node_infos()

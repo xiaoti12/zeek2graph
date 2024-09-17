@@ -1,9 +1,11 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import numpy as np
 import torch
 from torch_geometric.utils import to_networkx
 import pandas as pd
 from Constants import *
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 def get_node_attribute(row: pd.Series) -> List:
@@ -53,7 +55,8 @@ def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
 
 def visualize_graph(data):
     G = to_networkx(data, to_undirected=True)
-    visualize_graph(G, color=data.y)
+    nx.draw(G, node_color=data.y, with_labels=True)
+    plt.show()
 
 
 def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]:
