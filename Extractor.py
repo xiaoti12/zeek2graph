@@ -5,7 +5,7 @@ import os
 from os import path
 from typing import List, Dict
 import numpy as np
-from utils import get_node_attribute
+from utils import get_node_attribute, replace_source_ip_randomly
 import json
 from Constants import *
 
@@ -45,7 +45,8 @@ class Extractor:
         return data[-1]["graph_id"] + 1
 
     @classmethod
-    def log2df(self, log_path: str = None, label: int = None) -> DataFrame:
+    def log2df(self, log_path: str = None, label: int = None, replace_src: bool = False) -> DataFrame:
+        log_path = path.join(LOG_DIR, log_path)
         if log_path is not None:
             self.log_path = log_path
         if not os.path.exists(self.log_path):
@@ -58,6 +59,8 @@ class Extractor:
         # delete ts and duration column
         df.replace([pd.NA, pd.NaT, np.nan], 0, inplace=True)
         df.infer_objects(copy=False)
+        if replace_src:
+            replace_source_ip_randomly(df)
         return df
 
     def add_edge(self, host1: str, host2: str, node_id: int):

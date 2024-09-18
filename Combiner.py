@@ -13,14 +13,14 @@ class Combiner:
 
     def replace_malware_hosts(self) -> None:
         # 将每个恶意流量的源主机（受害主机），修改为正常流量中的地址
-        normal_hosts = self.normal[COLUMN.HOST].unique()
+        normal_hosts = self.normal[COLUMN.SRC_HOST].unique()
 
         for malware_df in self.malware_list:
             replacement = {}
 
-            for host in malware_df[COLUMN.HOST].unique():
+            for host in malware_df[COLUMN.SRC_HOST].unique():
                 replacement[host] = np.random.choice(normal_hosts)
-            malware_df[COLUMN.HOST] = malware_df[COLUMN.HOST].map(replacement)
+            malware_df[COLUMN.SRC_HOST] = malware_df[COLUMN.SRC_HOST].map(replacement)
 
     def change_malware_ts(self) -> None:
         # 将恶意流量中的timestamp适配到正常流量一致

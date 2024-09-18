@@ -6,6 +6,7 @@ import pandas as pd
 from Constants import *
 import networkx as nx
 import matplotlib.pyplot as plt
+import random
 
 
 def get_node_attribute(row: pd.Series) -> List:
@@ -101,6 +102,31 @@ def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]
     dfs = [group for _, group in resampled_groups if group.shape[0] > 0]
 
     return dfs
+
+
+def replace_source_ip_randomly(df: pd.DataFrame) -> pd.DataFrame:
+    # 将连续的相同<源IP,目的IP>行中，源IP替换为随机IP，避免log文件中源IP数量较少
+    def generate_random_ip() -> str:
+        return ".".join(str(random.randint(0, 255)) for _ in range(4))
+
+    random_ips = []
+    random_count = max(3, int(len(df) / 100))
+    for _ in range(random_count):
+        random_ips.append(generate_random_ip())
+
+    previous_pair = None
+    random_ip = None
+
+    for idx in range(len(df)):
+        current_pair = (df.at[idx, COLUMN.SRC_HOST], df.at[idx, COLUMN.DST_HOST])
+
+        if current_pair == previous_pair:
+            df.at[idx, COLUMN.SRC_HOST] = random_ip
+        else:
+            random_ip = random.choice(random_ips)
+            df.at[idx, COLUMN.SRC_HOST] = random_ip
+
+        previous_pair = current_pair
 
 
 if __name__ == "__main__":
