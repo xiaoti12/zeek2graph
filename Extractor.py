@@ -105,21 +105,25 @@ class Extractor:
         self.edges = np.zeros((node_total, node_total), dtype=int)
         self.edge_attr = np.zeros((node_total, node_total), dtype=float)
         for node_id, row in df.iterrows():
-            # 每一行为一条流，代表一个节点
-            node_info = dict()
-            node_info["graph_id"] = graph_id
-            node_info["node_id"] = node_id
-            node_info["attribute"] = get_node_attribute(row)
-            if self.label is None:
-                node_info["label"] = row[COLUMN.LABEL]
-            else:
-                node_info["label"] = self.label
+            try:
+                # 每一行为一条流，代表一个节点
+                node_info = dict()
+                node_info["graph_id"] = graph_id
+                node_info["node_id"] = node_id
+                node_info["attribute"] = get_node_attribute(row)
+                if self.label is None:
+                    node_info["label"] = row[COLUMN.LABEL]
+                else:
+                    node_info["label"] = self.label
 
-            host1 = row["id.orig_h"]
-            host2 = row["id.resp_h"]
-            self.add_edge(host1, host2, node_id)
+                host1 = row["id.orig_h"]
+                host2 = row["id.resp_h"]
+                self.add_edge(host1, host2, node_id)
 
-            self.node_infos.append(node_info)
+                self.node_infos.append(node_info)
+            except Exception as e:
+                print(e, "line: ", node_id)
+                print("line: ", node_id, "file: ", self.log_path)
 
         self.save()
 
