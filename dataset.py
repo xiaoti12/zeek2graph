@@ -37,6 +37,8 @@ class MyDataset(InMemoryDataset):
         data_list = []
         node_info_df = pd.DataFrame.from_dict(Extractor.load_node_infos())
 
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         for graph_id in node_info_df["graph_id"].unique():
             edges = Extractor.load_edges(graph_id)
             current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
@@ -50,7 +52,7 @@ class MyDataset(InMemoryDataset):
             edges_index = dense_matrix_to_coo(edges)
             edge_attr = get_edge_attr(edges_index, graph_id)
 
-            data = Data(x=attrs, y=y, edge_index=edges_index, edge_attr=edge_attr)
+            data = Data(x=attrs, y=y, edge_index=edges_index, edge_attr=edge_attr).to(device)
             data_list.append(data)
 
         self.save(data_list, self.processed_paths[0])
