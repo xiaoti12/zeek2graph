@@ -87,6 +87,7 @@ def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
 def visualize_graph(data):
     G = to_networkx(data, to_undirected=True)
     nx.draw(G, node_color=data.y, with_labels=True)
+    plt.savefig("graph.png")
     plt.show()
 
 

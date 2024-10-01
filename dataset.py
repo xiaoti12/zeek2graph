@@ -3,6 +3,7 @@ from torch_geometric.data import InMemoryDataset, Data
 import os
 from utils import *
 from Extractor import Extractor
+from tqdm import tqdm
 
 
 class MyDataset(InMemoryDataset):
@@ -39,7 +40,7 @@ class MyDataset(InMemoryDataset):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        for graph_id in node_info_df["graph_id"].unique():
+        for graph_id in tqdm(node_info_df["graph_id"].unique()):
             edges = Extractor.load_edges(graph_id)
             current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
 
