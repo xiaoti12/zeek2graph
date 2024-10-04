@@ -96,6 +96,7 @@ def test(model, loader):
 print("begin trainning")
 train_accuracies = []
 test_accuracies = []
+epochs = []
 for epoch in range(1, 201):
     train(model, train_loader)
     if epoch % 10 == 0:
@@ -103,14 +104,23 @@ for epoch in range(1, 201):
         test_accuracy = test(model, test_loader)
         train_accuracies.append(train_accuracy)
         test_accuracies.append(test_accuracy)
+        epochs.append(epoch)
         print(
             f'Epoch: {epoch}, Train Accuracy: {train_accuracy:.4f}, Test Accuracy: {test_accuracy:.4f}, Skip: {skip_num},Train: {train_num}'
         )
 
 plt.figure().set_figwidth(15)
-plt.plot(train_accuracies, label='Train Accuracy')
-plt.plot(test_accuracies, label='Test Accuracy')
+plt.plot(epochs, train_accuracies, label='Train Accuracy', marker='o')
+plt.plot(epochs, test_accuracies, label='Test Accuracy', marker='o')
+
+# 在每个数据点添加文本
+for i in range(len(epochs)):
+    plt.text(epochs[i], train_accuracies[i], f'{train_accuracies[i]:.4f}', ha='center', va='bottom')
+    plt.text(epochs[i], test_accuracies[i], f'{test_accuracies[i]:.4f}', ha='center', va='bottom')
+
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
+plt.xticks(epochs)
 plt.legend()
+plt.savefig("accuracy.png")
 plt.show()
