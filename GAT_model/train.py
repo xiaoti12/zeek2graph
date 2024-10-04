@@ -5,6 +5,7 @@ root_dir = path.abspath(path.dirname(path.dirname(__file__)))
 sys.path.append(root_dir)
 
 import random
+import matplotlib.pyplot as plt
 import torch
 import gc
 from dataset import MyDataset
@@ -79,8 +80,6 @@ def test(model, loader):
     true_labels = []
     with torch.no_grad():
         for data in loader:
-            if data.edge_index.size()[0] != data.batch.size()[0]:
-                continue
             output = model(data)
             preds = output.argmax(dim=1)
             predictions.append(preds)
@@ -95,11 +94,23 @@ def test(model, loader):
 
 
 print("begin trainning")
+train_accuracies = []
+test_accuracies = []
 for epoch in range(1, 201):
     train(model, train_loader)
     if epoch % 10 == 0:
         train_accuracy = test(model, train_loader)
         test_accuracy = test(model, test_loader)
+        train_accuracies.append(train_accuracy)
+        test_accuracies.append(test_accuracy)
         print(
             f'Epoch: {epoch}, Train Accuracy: {train_accuracy:.4f}, Test Accuracy: {test_accuracy:.4f}, Skip: {skip_num},Train: {train_num}'
         )
+
+plt.figure().set_figwidth(15)
+plt.plot(train_accuracies, label='Train Accuracy')
+plt.plot(test_accuracies, label='Test Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
