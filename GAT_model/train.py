@@ -13,6 +13,7 @@ from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from model import GATModel
+from typing import Tuple
 
 
 def get_dataset() -> MyDataset:
@@ -48,20 +49,23 @@ model = GATModel(in_channels=15, out_channels=2)
 model.cuda()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = torch.nn.CrossEntropyLoss()
+# criterion = torch.nn.BCEWithLogitsLoss() # for in_channels=1
 
 
 skip_num = 0
 train_num = 0
 
 
-def train(model, loader):
+def train(model, loader) -> float:
     global skip_num, train_num
     model.train()
+    loss_total = 0
     for data in loader:
         try:
             optimizer.zero_grad()
             output = model(data)
             loss = criterion(output, data.y)
+            loss_total += loss.item()
             loss.backward()
             optimizer.step()
             train_num += 1
@@ -74,13 +78,16 @@ def train(model, loader):
 
 
 # Testing Loop
-def test(model, loader):
+def test(model, loader) -> Tuple[float, float]:
+    loss_total = 0
     model.eval()
     predictions = []
     true_labels = []
     with torch.no_grad():
         for data in loader:
             output = model(data)
+            loss = criterion(output, data.y)
+            loss_total += loss.item()
             preds = output.argmax(dim=1)
             predictions.append(preds)
             true_labels.append(data.y)
@@ -90,33 +97,40 @@ def test(model, loader):
     true_labels = torch.cat(true_labels).cpu().numpy()
 
     accuracy = accuracy_score(true_labels, predictions)
-    return accuracy
+    return accuracy, loss_total / len(loader)
 
 
 print("begin trainning")
 train_accuracies = []
 test_accuracies = []
+train_losses = []
+test_losses = []
 epochs = []
+print(f"{'Epoch':<10}{'Train Acc':<15}{'Test Acc':<15}{'Train Loss':<15}{'Test Loss':<15}{'Skip':<10}")
 for epoch in range(1, 201):
     train(model, train_loader)
     if epoch % 10 == 0:
-        train_accuracy = test(model, train_loader)
-        test_accuracy = test(model, test_loader)
+        train_accuracy, train_loss = test(model, train_loader)
+        test_accuracy, test_loss = test(model, test_loader)
         train_accuracies.append(train_accuracy)
         test_accuracies.append(test_accuracy)
         epochs.append(epoch)
-        print(
-            f'Epoch: {epoch}, Train Accuracy: {train_accuracy:.4f}, Test Accuracy: {test_accuracy:.4f}, Skip: {skip_num},Train: {train_num}'
-        )
+        train_losses.append(train_loss)
+        test_losses.append(test_loss)
+        print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}{skip_num:<10}")
 
 plt.figure().set_figwidth(15)
 plt.plot(epochs, train_accuracies, label='Train Accuracy', marker='o')
 plt.plot(epochs, test_accuracies, label='Test Accuracy', marker='o')
+plt.plot(epochs, train_losses, label='Train Loss', marker='o')
+
 
 # 在每个数据点添加文本
 for i in range(len(epochs)):
-    plt.text(epochs[i], train_accuracies[i], f'{train_accuracies[i]:.4f}', ha='center', va='bottom')
-    plt.text(epochs[i], test_accuracies[i], f'{test_accuracies[i]:.4f}', ha='center', va='bottom')
+    plt.text(epochs[i], train_accuracies[i], f'{train_accuracies[i]:.2f}', ha='center', va='bottom')
+    plt.text(epochs[i], test_accuracies[i], f'{test_accuracies[i]:.2f}', ha='center', va='bottom')
+    plt.text(epochs[i], train_losses[i], f'{train_losses[i]:.2f}', ha='center', va='bottom')
+    plt.text(epochs[i], test_losses[i], f'{test_losses[i]:.2f}', ha='center', va='bottom')
 
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
