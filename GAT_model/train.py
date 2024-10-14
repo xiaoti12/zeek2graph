@@ -122,19 +122,26 @@ for epoch in range(1, 201):
 plt.figure().set_figwidth(15)
 plt.plot(epochs, train_accuracies, label='Train Accuracy', marker='o')
 plt.plot(epochs, test_accuracies, label='Test Accuracy', marker='o')
-plt.plot(epochs, train_losses, label='Train Loss', marker='o')
-
-
-# 在每个数据点添加文本
 for i in range(len(epochs)):
     plt.text(epochs[i], train_accuracies[i], f'{train_accuracies[i]:.2f}', ha='center', va='bottom')
     plt.text(epochs[i], test_accuracies[i], f'{test_accuracies[i]:.2f}', ha='center', va='bottom')
-    plt.text(epochs[i], train_losses[i], f'{train_losses[i]:.2f}', ha='center', va='bottom')
-    plt.text(epochs[i], test_losses[i], f'{test_losses[i]:.2f}', ha='center', va='bottom')
-
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.xticks(epochs)
 plt.legend()
 plt.savefig("accuracy.png")
-plt.show()
+plt.close()
+
+
+plt.figure().set_figwidth(15)
+plt.plot(epochs, train_losses, label='Train Loss', marker='o')
+plt.plot(epochs, test_losses, label='Test Loss', marker='o')
+# 在每个数据点添加文本
+for i in range(len(epochs)):
+    plt.text(epochs[i], train_losses[i], f'{train_losses[i]:.2f}', ha='center', va='bottom')
+    plt.text(epochs[i], test_losses[i], f'{test_losses[i]:.2f}', ha='center', va='bottom')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.xticks(epochs)
+plt.legend()
+plt.savefig("loss.png")
