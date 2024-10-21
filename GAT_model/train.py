@@ -4,8 +4,6 @@ import sys
 root_dir = path.abspath(path.dirname(path.dirname(__file__)))
 sys.path.append(root_dir)
 
-import random
-import matplotlib.pyplot as plt
 import torch
 import gc
 from dataset import MyDataset
@@ -26,7 +24,7 @@ def get_dataset() -> MyDataset:
 
 dataset = get_dataset()
 
-train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2, random_state=42)
+train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2)
 print("train size: ", len(train_indices))
 print("test size: ", len(test_indices))
 print(f'Number of features: {dataset.num_features}')
@@ -41,11 +39,6 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, dr
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, drop_last=True)
 
 model = GATModel(in_channels=15, out_channels=2)
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# if torch.cuda.device_count() > 1:
-#     print(f"Using {torch.cuda.device_count()} GPUs!")
-#     model = torch.nn.DataParallel(model)
-#     model.to(device)
 model.cuda()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = torch.nn.CrossEntropyLoss()
@@ -112,36 +105,17 @@ for epoch in range(1, 201):
     if epoch % 10 == 0:
         train_accuracy, train_loss = test(model, train_loader)
         test_accuracy, test_loss = test(model, test_loader)
+
         train_accuracies.append(train_accuracy)
         test_accuracies.append(test_accuracy)
         epochs.append(epoch)
         train_losses.append(train_loss)
         test_losses.append(test_loss)
+
         print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}{skip_num:<10}")
 
-plt.figure().set_figwidth(15)
-plt.plot(epochs, train_accuracies, label='Train Accuracy', marker='o')
-plt.plot(epochs, test_accuracies, label='Test Accuracy', marker='o')
-for i in range(len(epochs)):
-    plt.text(epochs[i], train_accuracies[i], f'{train_accuracies[i]:.2f}', ha='center', va='bottom')
-    plt.text(epochs[i], test_accuracies[i], f'{test_accuracies[i]:.2f}', ha='center', va='bottom')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.xticks(epochs)
-plt.legend()
-plt.savefig("accuracy.png")
-plt.close()
 
+from draw import draw_loss, draw_accuracy
 
-plt.figure().set_figwidth(15)
-plt.plot(epochs, train_losses, label='Train Loss', marker='o')
-plt.plot(epochs, test_losses, label='Test Loss', marker='o')
-# 在每个数据点添加文本
-for i in range(len(epochs)):
-    plt.text(epochs[i], train_losses[i], f'{train_losses[i]:.2f}', ha='center', va='bottom')
-    plt.text(epochs[i], test_losses[i], f'{test_losses[i]:.2f}', ha='center', va='bottom')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.xticks(epochs)
-plt.legend()
-plt.savefig("loss.png")
+draw_loss(epochs, train_losses, test_losses)
+draw_accuracy(epochs, train_accuracies, test_accuracies)
