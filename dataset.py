@@ -4,6 +4,8 @@ import os
 from utils import *
 from Extractor import Extractor
 from tqdm import tqdm
+from sklearn.preprocessing import StandardScaler
+import numpy as np
 
 
 class MyDataset(InMemoryDataset):
@@ -40,11 +42,23 @@ class MyDataset(InMemoryDataset):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        all_attrs = []
+        for graph_id in node_info_df["graph_id"].unique():
+            current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
+            attrs = np.array(current_data["attribute"].to_list(), dtype=np.float32)
+            all_attrs.append(attrs)
+
+        # Fit the scaler on all attributes
+        all_attrs = np.vstack(all_attrs)
+        scaler = StandardScaler()
+        scaler.fit(all_attrs)
+
         for graph_id in tqdm(node_info_df["graph_id"].unique()):
             edges = Extractor.load_edges(graph_id)
             current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
 
             attrs = np.array(current_data["attribute"].to_list(), dtype=np.float32)
+            attrs = scaler.transform(attrs)
             attrs = torch.from_numpy(attrs)
 
             labels = np.array(current_data["label"].to_list(), dtype=np.int64)
