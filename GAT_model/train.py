@@ -33,14 +33,19 @@ print(f'Number of first graph edges: {dataset[0].edge_index._indices().shape[1]}
 train_dataset = dataset[train_indices]
 test_dataset = dataset[test_indices]
 
-BATCH_SIZE = 16
-# Data loaders
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, drop_last=True)
+parameters = {
+    "batch_size": 16,
+    "dropout": 0.3,
+    "learning_rate": 0.001,
+}
 
-model = GATModel(in_channels=15, out_channels=2)
+# Data loaders
+train_loader = DataLoader(train_dataset, batch_size=parameters["batch_size"], shuffle=True, drop_last=True)
+test_loader = DataLoader(test_dataset, batch_size=parameters["batch_size"], shuffle=False, drop_last=True)
+
+model = GATModel(in_channels=15, out_channels=2, dropout=parameters["dropout"])
 model.cuda()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=parameters["learning_rate"])
 criterion = torch.nn.CrossEntropyLoss()
 # criterion = torch.nn.BCEWithLogitsLoss() # for in_channels=1
 

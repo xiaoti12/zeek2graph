@@ -4,7 +4,7 @@ from torch_geometric.nn import GATConv, BatchNorm
 
 
 class GATModel(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dropout):
         super(GATModel, self).__init__()
         self.conv1 = GATConv(in_channels, 128, heads=4)
         self.bn1 = BatchNorm(128 * 4)
@@ -21,6 +21,8 @@ class GATModel(torch.nn.Module):
         self.lin1 = torch.nn.Linear(128 * 4, 128)  # Linear layer with a reasonable size
         self.lin2 = torch.nn.Linear(128, 64)  # Second layer for reducing dimensionality
         self.lin3 = torch.nn.Linear(64, out_channels)  # Final layer outputting two classes
+
+        self.dropout = dropout
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -43,7 +45,7 @@ class GATModel(torch.nn.Module):
 
         # Final linear layers
         x = F.relu(self.lin1(x))
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.relu(self.lin2(x))
         x = F.log_softmax(self.lin3(x), dim=-1)
 
