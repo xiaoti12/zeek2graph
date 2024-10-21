@@ -57,8 +57,8 @@ class Extractor:
         if label is not None:
             df[COLUMN.LABEL] = label
         # delete ts and duration column
-        df.replace([pd.NA, pd.NaT, np.nan], 0, inplace=True)
         df = df[df['or_spl'] != "(empty)"]
+        df.replace([pd.NA, pd.NaT, np.nan, "(empty)"], 0, inplace=True)
         df = df.reset_index(drop=True)
         df.infer_objects(copy=False)
         if replace_src:

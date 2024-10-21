@@ -8,6 +8,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 
+cipher_list = [5, 47, 61, 4865, 4866, 49171, 49191, 49199, 49200]
+cipher_std = {c: i for i, c in enumerate(cipher_list)}
+
 
 def get_node_attribute(row: pd.Series) -> List:
     attr = []
@@ -15,10 +18,26 @@ def get_node_attribute(row: pd.Series) -> List:
     attr.append(row["down_bytes"])
     attr.append(row["up_bytes"] / (row["down_bytes"] + 0.1))
     attr.append(row["up_pkts"] + row["down_pkts"])
-    attr = attr + get_packet_len_bin(row["or_spl"])
+    attr.append(row["up_pkts"] / (row["down_pkts"] + 0.1))
+    attr.append(row["san_num"])
+    attr.append(row["ext_num"])
+    attr.append(get_duration(row))
     attr.append(get_tls_version(row))
+    attr.append(is_self_sighed(row))
+    attr.append(get_valid_time(row))
+    attr.append(get_ciphers_len(row))
+    attr = attr + get_packet_len_bin(row["or_spl"])
+    attr = attr + get_cipher(row)
 
     return attr
+
+
+def get_cipher(row: pd.Series) -> List[int]:
+    ciphers = [0] * len(cipher_list)
+    server_cipher = int(row["cipher"])
+    if server_cipher in cipher_std:
+        ciphers[cipher_std[server_cipher]] = 1
+    return ciphers
 
 
 def get_packet_len_bin(packet_len: str) -> List:
@@ -44,6 +63,39 @@ def get_tls_version(series):
     if version is None:
         version = version_map.get(series['server_version'])
     return version if version is not None else 0
+
+
+def get_duration(row: pd.Series) -> float:
+    # in format of seconds
+    delta = row["duration"]
+    return delta.total_seconds()
+
+
+def is_self_sighed(row: pd.Series) -> int:
+    if row["subject"] != 0 and row["issuer"] != 0:
+        if row["subject"] == row["issuer"]:
+            return 1
+        else:
+            return 0
+    else:
+        return -1
+
+
+def get_valid_time(row: pd.Series) -> int:
+    if row["valid_time"] == 0:
+        return 0
+    valid_times = row["valid_time"].split(",")
+    valid_times = [float(i) for i in valid_times]
+    avg_valid_time = sum(valid_times) / len(valid_times)
+    return int(avg_valid_time / 365.0)
+
+
+def get_ciphers_len(row: pd.Series) -> int:
+    ciphers = row["client_ciphers"]
+    if ciphers == 0:
+        return 0
+    ciphers = ciphers.split(",")
+    return len(ciphers)
 
 
 def dense_matrix_to_coo(adj_matrix: np.ndarray) -> torch.Tensor:
