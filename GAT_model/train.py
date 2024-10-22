@@ -22,40 +22,7 @@ def get_dataset() -> MyDataset:
     return data
 
 
-dataset = get_dataset()
-
-train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2)
-print("train size: ", len(train_indices))
-print("test size: ", len(test_indices))
-print(f'Number of features: {dataset.num_features}')
-print(f'Number of first graph edges: {dataset[0].edge_index._indices().shape[1]}')
-
-train_dataset = dataset[train_indices]
-test_dataset = dataset[test_indices]
-
-parameters = {
-    "batch_size": 16,
-    "dropout": 0.3,
-    "learning_rate": 0.001,
-}
-
-# Data loaders
-train_loader = DataLoader(train_dataset, batch_size=parameters["batch_size"], shuffle=True, drop_last=True)
-test_loader = DataLoader(test_dataset, batch_size=parameters["batch_size"], shuffle=False, drop_last=True)
-
-model = GATModel(in_channels=15, out_channels=2, dropout=parameters["dropout"])
-model.cuda()
-optimizer = torch.optim.Adam(model.parameters(), lr=parameters["learning_rate"])
-criterion = torch.nn.CrossEntropyLoss()
-# criterion = torch.nn.BCEWithLogitsLoss() # for in_channels=1
-
-
-skip_num = 0
-train_num = 0
-
-
 def train(model, loader) -> float:
-    global skip_num, train_num
     model.train()
     loss_total = 0
     for data in loader:
@@ -66,10 +33,8 @@ def train(model, loader) -> float:
             loss_total += loss.item()
             loss.backward()
             optimizer.step()
-            train_num += 1
         except Exception as e:
             # print(e)
-            skip_num += 1
             continue
         gc.collect()
         torch.cuda.empty_cache()
@@ -98,29 +63,66 @@ def test(model, loader) -> Tuple[float, float]:
     return accuracy, loss_total / len(loader)
 
 
-print("begin trainning")
-train_accuracies = []
-test_accuracies = []
-train_losses = []
-test_losses = []
-epochs = []
-print(f"{'Epoch':<10}{'Train Acc':<15}{'Test Acc':<15}{'Train Loss':<15}{'Test Loss':<15}{'Skip':<10}")
-for epoch in range(1, 201):
-    train(model, train_loader)
-    if epoch % 10 == 0:
-        train_accuracy, train_loss = test(model, train_loader)
-        test_accuracy, test_loss = test(model, test_loader)
+def train_test(model, train_loader, test_loader, epoch_times: int, test_step: int, draw_data=True):
+    train_accuracies = []
+    test_accuracies = []
+    train_losses = []
+    test_losses = []
+    epochs = []
+    print(f"{'Epoch':<10}{'Train Acc':<15}{'Test Acc':<15}{'Train Loss':<15}{'Test Loss':<15}{'Skip':<10}")
+    for epoch in range(1, epoch_times + 1):
+        train(model, train_loader)
+        if epoch % test_step == 0:
+            train_accuracy, train_loss = test(model, train_loader)
+            test_accuracy, test_loss = test(model, test_loader)
 
-        train_accuracies.append(train_accuracy)
-        test_accuracies.append(test_accuracy)
-        epochs.append(epoch)
-        train_losses.append(train_loss)
-        test_losses.append(test_loss)
+            train_accuracies.append(train_accuracy)
+            test_accuracies.append(test_accuracy)
+            epochs.append(epoch)
+            train_losses.append(train_loss)
+            test_losses.append(test_loss)
 
-        print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}{skip_num:<10}")
+            print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}")
+
+    avg_train_accu = sum(train_accuracies) / len(train_accuracies)
+    avg_test_accu = sum(test_accuracies) / len(test_accuracies)
+    print(f"avg train accuracy: {avg_train_accu:.4f}, avg test accuracy: {avg_test_accu:.4f}, min test loss: {min(test_losses):4f}")
+
+    if draw_data:
+        from draw import draw_loss, draw_accuracy
+
+        draw_loss(epochs, train_losses, test_losses)
+        draw_accuracy(epochs, train_accuracies, test_accuracies)
 
 
-from draw import draw_loss, draw_accuracy
+if __name__ == "__main__":
+    dataset = get_dataset()
 
-draw_loss(epochs, train_losses, test_losses)
-draw_accuracy(epochs, train_accuracies, test_accuracies)
+    train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2, random_state=12)
+    print("train size: ", len(train_indices))
+    print("test size: ", len(test_indices))
+    print(f'Number of features: {dataset.num_features}')
+
+    train_dataset = dataset[train_indices]
+    test_dataset = dataset[test_indices]
+
+    parameters = {"batch_size": 16, "dropout": 0.25, "learning_rate": 0.001, "epoch_times": 100, "test_step": 10}
+
+    train_loader = DataLoader(train_dataset, batch_size=parameters["batch_size"], shuffle=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=parameters["batch_size"], shuffle=False, drop_last=True)
+
+    model = GATModel(in_channels=31, out_channels=2, dropout=parameters["dropout"])
+    model.cuda()
+    optimizer = torch.optim.Adam(model.parameters(), lr=parameters["learning_rate"])
+    criterion = torch.nn.CrossEntropyLoss()
+    # criterion = torch.nn.BCEWithLogitsLoss() # for in_channels=1
+
+    print("begin training, parameters: ", parameters)
+    train_test(
+        model,
+        train_loader,
+        test_loader,
+        parameters["epoch_times"],
+        parameters["test_step"],
+    )
+    print("finish training")
