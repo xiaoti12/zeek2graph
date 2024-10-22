@@ -5,7 +5,8 @@ import os
 from os import path
 from typing import List, Dict
 import numpy as np
-from utils import get_node_attribute, replace_source_ip_randomly
+from utils import replace_source_ip_randomly
+from feature_tool import get_node_attribute
 import json
 from Constants import *
 
