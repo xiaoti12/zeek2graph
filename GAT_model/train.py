@@ -6,11 +6,11 @@ sys.path.append(root_dir)
 
 import torch
 import gc
-from dataset import MyDataset
+from dataset import *
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from model import GATModel
+from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score
+from model import *
 from typing import Tuple
 
 
@@ -59,8 +59,14 @@ def test(model, loader) -> Tuple[float, float]:
     predictions = torch.cat(predictions).cpu().numpy()
     true_labels = torch.cat(true_labels).cpu().numpy()
 
-    accuracy = accuracy_score(true_labels, predictions)
-    return accuracy, loss_total / len(loader)
+    accuracy = precision_score(true_labels, predictions)
+    recall = recall_score(true_labels, predictions)
+    f1 = f1_score(true_labels, predictions)
+
+    # Store metrics in a dictionary
+    metrics = {'accuracy': accuracy, 'loss': loss_total / len(loader), 'recall': recall, 'f1_score': f1}
+
+    return metrics
 
 
 def train_test(model, train_loader, test_loader, epoch_times: int, test_step: int, draw_data=True):
@@ -69,20 +75,23 @@ def train_test(model, train_loader, test_loader, epoch_times: int, test_step: in
     train_losses = []
     test_losses = []
     epochs = []
-    print(f"{'Epoch':<10}{'Train Acc':<15}{'Test Acc':<15}{'Train Loss':<15}{'Test Loss':<15}{'Skip':<10}")
+    print(f"{'Epoch':<10}{'Train Acc':<15}{'Test Acc':<15}{'Train Loss':<15}{'Test Loss':<15}{'Test Recall':<15}{'Test F1':<15}")
     for epoch in range(1, epoch_times + 1):
         train(model, train_loader)
         if epoch % test_step == 0:
-            train_accuracy, train_loss = test(model, train_loader)
-            test_accuracy, test_loss = test(model, test_loader)
+            train_metrics = test(model, train_loader)
+            test_metrics = test(model, test_loader)
 
-            train_accuracies.append(train_accuracy)
-            test_accuracies.append(test_accuracy)
+            train_accuracies.append(train_metrics['accuracy'])
+            test_accuracies.append(test_metrics['accuracy'])
             epochs.append(epoch)
-            train_losses.append(train_loss)
-            test_losses.append(test_loss)
+            train_losses.append(train_metrics['loss'])
+            test_losses.append(test_metrics['loss'])
 
-            print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}")
+            # print(f"{epoch:<10}{train_accuracy:<15.4f}{test_accuracy:<15.4f}{train_loss:<15.4f}{test_loss:<15.4f}")
+            print(
+                f"{epoch:<10}{train_metrics['accuracy']:<15.4f}{test_metrics['accuracy']:<15.4f}{train_metrics['loss']:<15.4f}{test_metrics['loss']:<15.4f}{test_metrics['recall']:<15.4f}{test_metrics['f1_score']:<15.4f}"
+            )
 
     avg_train_accu = sum(train_accuracies) / len(train_accuracies)
     avg_test_accu = sum(test_accuracies) / len(test_accuracies)
@@ -94,11 +103,13 @@ def train_test(model, train_loader, test_loader, epoch_times: int, test_step: in
         draw_loss(epochs, train_losses, test_losses)
         draw_accuracy(epochs, train_accuracies, test_accuracies)
 
+    return avg_test_accu
+
 
 if __name__ == "__main__":
     dataset = get_dataset()
 
-    train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2, random_state=12)
+    train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2, random_state=55)
     print("train size: ", len(train_indices))
     print("test size: ", len(test_indices))
     print(f'Number of features: {dataset.num_features}')
