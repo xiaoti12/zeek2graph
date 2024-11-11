@@ -49,9 +49,24 @@ def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
 
 def visualize_graph(data):
     G = to_networkx(data, to_undirected=True)
-    nx.draw(G, node_color=data.y, with_labels=True)
-    plt.savefig("graph.png")
-    plt.show()
+
+    # 创建颜色映射
+    color_map = {0: 'green', 1: 'red'}
+    node_colors = [color_map[label.item()] for label in data.y.cpu().numpy()]
+
+    plt.figure(figsize=(15, 8))
+    nx.draw(G, node_color=node_colors)
+
+    # 添加自定义标签的图例
+    label_names = {0: 'normal', 1: 'malware'}
+    legend_elements = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color_map[i], label=label_names[i], markersize=10) for i in [0, 1]
+    ]
+
+    plt.legend(handles=legend_elements, loc='upper right')
+    plt.savefig(f"graph.png")
+    # plt.show()
+    # plt.close()
 
 
 def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]:
