@@ -83,6 +83,10 @@ def split_df_by_time(df: pd.DataFrame, time_interval: str) -> List[pd.DataFrame]
     return dfs
 
 
+def get_graph_edge_num(data):
+    return len(data.edge_attr)
+
+
 def generate_random_ip() -> str:
     return ".".join(str(random.randint(0, 255)) for _ in range(4))
 

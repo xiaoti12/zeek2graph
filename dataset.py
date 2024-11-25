@@ -42,8 +42,24 @@ class MyDataset(InMemoryDataset):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        # 边权重归一化
+        all_edge_attrs = []
+        print("Collecting all edge attributes for scaling...")
+        for graph_id in tqdm(node_info_df["graph_id"].unique()):
+            edges = Extractor.load_edges(graph_id)
+            edges_index = dense_matrix_to_coo(edges)
+            edge_attr = get_edge_attr(edges_index, graph_id).numpy()
+            all_edge_attrs.append(edge_attr)
+
+        all_edge_attrs = np.concatenate(all_edge_attrs)
+
+        edge_min = all_edge_attrs.min()
+        edge_max = all_edge_attrs.max()
+
+        # 节点特征归一化
         all_attrs = []
-        for graph_id in node_info_df["graph_id"].unique():
+        print("Collecting all node attributes for scaling...")
+        for graph_id in tqdm(node_info_df["graph_id"].unique()):
             current_data = node_info_df.loc[node_info_df["graph_id"] == graph_id]
             attrs = np.array(current_data["attribute"].to_list(), dtype=np.float32)
             all_attrs.append(attrs)
@@ -65,9 +81,11 @@ class MyDataset(InMemoryDataset):
             y = torch.from_numpy(labels)
 
             edges_index = dense_matrix_to_coo(edges)
-            edge_attr = get_edge_attr(edges_index, graph_id)
+            edge_attr = get_edge_attr(edges_index, graph_id).numpy()
+            edge_attr_scaled = (edge_attr - edge_min) / (edge_max - edge_min)
+            edge_attr_scaled = torch.from_numpy(edge_attr_scaled).float()
 
-            data = Data(x=attrs, y=y, edge_index=edges_index, edge_attr=edge_attr).to(device)
+            data = Data(x=attrs, y=y, edge_index=edges_index, edge_attr=edge_attr_scaled).to(device)
             data_list.append(data)
 
         self.save(data_list, self.processed_paths[0])
