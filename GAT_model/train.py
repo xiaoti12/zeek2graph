@@ -14,12 +14,18 @@ from model import *
 from typing import Tuple
 
 
-def get_dataset() -> MyDataset:
-    data = MyDataset(root="./")
-    # size = len(data)
-    # indices = list(range(int(size * 0.6)))
-    # return data.index_select(indices)
-    return data
+def get_dataset(ratio=1.0, cuda_index=0) -> MyDataset:
+    if cuda_index == 0:
+        data = MyDataset(root="./")
+    elif cuda_index == 1:
+        data = MyDatasetCuda1(root="./")
+
+    if ratio == 1.0:
+        return data
+
+    size = len(data)
+    indices = list(range(int(size * ratio)))
+    return data.index_select(indices)
 
 
 def train(model, loader) -> float:
@@ -107,7 +113,8 @@ def train_test(model, train_loader, test_loader, epoch_times: int, test_step: in
 
 
 if __name__ == "__main__":
-    dataset = get_dataset()
+    cuda_index = 0
+    dataset = get_dataset(cuda_index=cuda_index)
 
     train_indices, test_indices = train_test_split(range(len(dataset)), test_size=0.2, random_state=55)
     print("train size: ", len(train_indices))
