@@ -73,15 +73,43 @@ class MyDataset(InMemoryDataset):
         self.save(data_list, self.processed_paths[0])
 
 
+class MyDatasetCuda1(InMemoryDataset):
+    def __init__(self, root, transform=None, pre_transform=None):
+        super().__init__(root, transform, pre_transform)
+        self.load(self.processed_paths[0])
+
+    @property
+    def raw_dir(self):
+        return os.path.join(self.root, "raw")
+
+    @property
+    def processed_dir(self):
+        return os.path.join(self.root, "processed2")
+
+    @property
+    def processed_file_names(self):
+        return ["data.pt"]
+
+
+def find_graph(dataset: MyDataset) -> Data:
+    # 寻找最小节点数的图，适合用于可视化
+    z = dataset[0]
+    min_node_num = z.num_nodes
+    for data in dataset:
+        if data.num_nodes < min_node_num and data.num_nodes > 100 and get_graph_edge_num(data) > 100:
+            min_node_num = data.num_nodes
+            z = data
+    return z
+
+
 if __name__ == "__main__":
     # dataset = torch.load(os.path.join("processed", "data.pt"))
     dataset = MyDataset(root="./")
-    z = dataset[0]
+    z = dataset[61]
     print(f'Dataset: {dataset}:')
     print('==============================')
     print(f'Number of graphs: {len(dataset)}')
     print(f'Number of features: {dataset.num_features}')
-    print(f'Number of edges: {z.num_edges}')
     print(f'Number of classes: {dataset.num_classes}')
 
     if z.x.is_sparse:
