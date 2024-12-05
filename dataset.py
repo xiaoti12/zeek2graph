@@ -48,7 +48,7 @@ class MyDataset(InMemoryDataset):
         for graph_id in tqdm(node_info_df["graph_id"].unique()):
             edges = Extractor.load_edges(graph_id)
             edges_index = dense_matrix_to_coo(edges)
-            edge_attr = get_edge_attr(edges_index, graph_id).numpy()
+            edge_attr = load_edge_attr(edges_index, graph_id).numpy()
             all_edge_attrs.append(edge_attr)
 
         all_edge_attrs = np.concatenate(all_edge_attrs)
@@ -81,7 +81,7 @@ class MyDataset(InMemoryDataset):
             y = torch.from_numpy(labels)
 
             edges_index = dense_matrix_to_coo(edges)
-            edge_attr = get_edge_attr(edges_index, graph_id).numpy()
+            edge_attr = load_edge_attr(edges_index, graph_id).numpy()
             edge_attr_scaled = (edge_attr - edge_min) / (edge_max - edge_min)
             edge_attr_scaled = torch.from_numpy(edge_attr_scaled).float()
 

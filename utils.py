@@ -27,22 +27,22 @@ def dense_matrix_to_coo(adj_matrix: np.ndarray) -> torch.Tensor:
     return coo_tensor
 
 
-def get_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
+def load_edge_attr(coo_tensor: torch.Tensor, graph_id: int) -> torch.Tensor:
     # 从COO向量读取边的起终节点，读取权重，返回[n, 1]的向量
     edge_attr_file = path.join("raw", f"edge_attr_{graph_id}.npy")
     edge_attr_matrix: np.ndarray = np.load(edge_attr_file)
 
-    edge_attr = torch.empty(0, 1)
+    # 获取索引
+    indices = coo_tensor._indices()
+    num_edges = indices.shape[1]
 
-    coo_tensor = coo_tensor._indices()
+    # 预分配结果张量
+    edge_attr = torch.empty(num_edges, 1)
 
-    for index in range(coo_tensor.shape[1]):
-        start = coo_tensor[0, index].item()
-        end = coo_tensor[1, index].item()
-        cur_attr = edge_attr_matrix[start][end]
-
-        value = torch.tensor([[cur_attr]])
-        edge_attr = torch.cat((edge_attr, value), dim=0)
+    # 使用向量化操作
+    start_indices = indices[0].numpy()
+    end_indices = indices[1].numpy()
+    edge_attr[:, 0] = torch.from_numpy(edge_attr_matrix[start_indices, end_indices])
 
     return edge_attr
 
