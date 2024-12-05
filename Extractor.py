@@ -9,6 +9,7 @@ from utils import replace_source_ip_randomly
 from feature_tool import get_node_attribute
 import json
 from Constants import *
+import pickle
 
 
 class Extractor:
@@ -35,13 +36,11 @@ class Extractor:
         # 每次提取，会将df中所有数据标为同一个graph
         # create file if not exist
         if not os.path.exists(NODE_INFO_FILE):
-            with open(NODE_INFO_FILE, "w") as f:
+            with open(NODE_INFO_FILE, "wb") as f:
                 pass
             return 0
-        with open(NODE_INFO_FILE, "r") as f:
-            f.seek(0, os.SEEK_END)
-            if f.tell() == 0:
-                return 0
+        if os.path.getsize(NODE_INFO_FILE) == 0:
+            return 0
         data = self.load_node_infos()
         return data[-1]["graph_id"] + 1
 
@@ -132,18 +131,13 @@ class Extractor:
 
     def save_node_infos(self):
         pre_data = self.load_node_infos()
-        with open(NODE_INFO_FILE, "w") as f:
-            json.dump(pre_data + self.node_infos, f)
+        with open(NODE_INFO_FILE, "wb") as f:
+            pickle.dump(pre_data + self.node_infos, f)
 
     @classmethod
     def load_node_infos(self) -> List[Dict]:
-        with open(NODE_INFO_FILE, "r") as f:
-            content = f.read().strip()
-
-        if len(content) == 0:
-            data = []
-        else:
-            data = json.loads(content)
+        with open(NODE_INFO_FILE, "rb") as f:
+            data = pickle.load(f)
         return data
 
     def save_edges(self):

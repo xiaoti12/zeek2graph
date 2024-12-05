@@ -13,6 +13,6 @@ class COLUMN:
     LABEL = "label"
 
 
-NODE_INFO_FILE = path.join("raw", "node_info.json")
+NODE_INFO_FILE = path.join("raw", "node_info.pkl")
 
 LOG_DIR = "raw_logs"
