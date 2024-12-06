@@ -136,6 +136,8 @@ class Extractor:
 
     @classmethod
     def load_node_infos(self) -> List[Dict]:
+        if os.path.getsize(NODE_INFO_FILE) == 0:
+            return []
         with open(NODE_INFO_FILE, "rb") as f:
             data = pickle.load(f)
         return data
@@ -163,3 +165,14 @@ class Extractor:
     def save(self):
         self.save_node_infos()
         self.save_edges()
+
+
+if __name__ == "__main__":
+    import time
+    from tqdm import tqdm
+
+    start = time.time()
+    for i in tqdm(range(2000)):
+        edge_attr_file = path.join("raw", f"edge_attr_{i}.npy")
+        edge_attr_matrix: np.ndarray = np.load(edge_attr_file)
+    print(f"cost {time.time() - start:5f}s time")
