@@ -10,6 +10,8 @@ from feature_tool import get_node_attribute
 import json
 from Constants import *
 import pickle
+from functools import lru_cache
+from collections import defaultdict
 
 
 class Extractor:
@@ -27,7 +29,7 @@ class Extractor:
 
         self.node_infos: List[Dict] = []
         # 记录每个主机对应的节点，即在哪些流中
-        self.host2node: Dict[str, List[int]] = dict()
+        self.host2node: Dict[str, List[int]] = defaultdict(list)
         self.edges: np.ndarray = None
         self.edge_attr: np.ndarray = None
 
@@ -66,35 +68,21 @@ class Extractor:
         return df
 
     def add_edge(self, host1: str, host2: str, node_id: int):
-        # 更新主机对应节点、邻接矩阵
-        if host1 not in self.host2node:
-            self.host2node[host1] = [node_id]
-        else:
-            self.host2node[host1].append(node_id)
+        self.host2node[host1].append(node_id)
+        self.host2node[host2].append(node_id)
 
-        if host2 not in self.host2node:
-            self.host2node[host2] = [node_id]
-        else:
-            self.host2node[host2].append(node_id)
+        # 获取需要处理的所有相关节点
+        related_nodes = set(self.host2node[host1] + self.host2node[host2])
+        related_nodes.remove(node_id)  # 移除当前节点
 
-        for node in self.host2node[host1]:
-            if node == node_id:
-                continue
-            self.edges[node][node_id] = 1
-            self.edges[node_id][node] = 1
+        # 批量更新边和属性
+        for node in related_nodes:
+            # 使用数组切片同时更新对称位置
+            self.edges[node, node_id] = self.edges[node_id, node] = 1
 
+            # 只计算一次边属性
             attr = self.get_edge_attr(node, node_id)
-            self.edge_attr[node][node_id] = attr
-            self.edge_attr[node_id][node] = attr
-        for node in self.host2node[host2]:
-            if node == node_id:
-                continue
-            self.edges[node][node_id] = 1
-            self.edges[node_id][node] = 1
-
-            attr = self.get_edge_attr(node, node_id)
-            self.edge_attr[node][node_id] = attr
-            self.edge_attr[node_id][node] = attr
+            self.edge_attr[node, node_id] = self.edge_attr[node_id, node] = attr
 
     # 更新node_infos和edges邻接矩阵
     def extract(self):
